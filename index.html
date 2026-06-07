@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktywny Symulator Guzika Bezpieczeństwa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FAF9F6; /* Ciepłe tło dokładnie jak na Twoim slajdzie */
+        }
+        h1, h2, h3 {
+            font-family: 'Montserrat', sans-serif;
+        }
+        /* Efekt pulsowania dla fal sygnału */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { opacity: 0.5; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+        .pulse-wave {
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.610, 0.355, 1) infinite;
+        }
+        /* Efekt migania ekranu alarmowego */
+        @keyframes emergency-flash {
+            0%, 100% { background-color: #7f1d1d; }
+            50% { background-color: #b91c1c; }
+        }
+        .flash-active {
+            animation: emergency-flash 0.8s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 md:p-8 select-none">
+
+    <div class="max-w-6xl w-full bg-[#FAF9F6] border border-gray-100 rounded-3xl p-6 md:p-12 shadow-sm">
+        
+        <!-- Główny Nagłówek -->
+        <div class="text-center md:text-left mb-8 md:mb-12">
+            <h1 class="text-3xl md:text-5xl font-extrabold text-[#111827] tracking-tight">
+                Wypróbuj to teraz (Symulator)
+            </h1>
+        </div>
+
+        <!-- Układ dwukolumnowy (Dokładnie jak na Twoim slajdzie) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center">
+            
+            <!-- Lewa Kolumna: Instrukcja -->
+            <div class="lg:col-span-6 space-y-6 text-[#1f2937]">
+                <div class="space-y-3">
+                    <h2 class="text-xl md:text-2xl font-bold text-[#111827]">
+                        Zasada pięciu kliknięć
+                    </h2>
+                    <p class="text-base md:text-lg leading-relaxed text-gray-600">
+                        Aby zapobiec przypadkowemu uruchomieniu alarmu, system wymaga naciśnięcia przycisku szybko — dokładnie <strong class="text-[#B83E15] font-bold">5 razy z rzędu</strong>.
+                    </p>
+                </div>
+
+                <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl">
+                    <p class="text-sm text-amber-800 font-medium">
+                        💡 <strong>Zasada fizyczna:</strong> Przerwa między kliknięciami nie może być dłuższa niż 0,5 sekundy. Jeśli będziesz klikać zbyt wolno, licznik się zresetuje!
+                    </p>
+                </div>
+
+                <div class="space-y-2 text-sm md:text-base text-gray-500">
+                    <p>1. Przetestuj to na makiecie po prawej stronie.</p>
+                    <p>2. Kliknij przycisk "KLIKNIJ" pięć razy bez robienia długich przerw.</p>
+                    <p>3. Zobacz, jak zareaguje telefon!</p>
+                </div>
+            </div>
+
+            <!-- Prawa Kolumna: Makieta Telefonu -->
+            <div class="lg:col-span-6 flex justify-center">
+                
+                <!-- Obudowa telefonu -->
+                <div class="relative w-[340px] h-[580px] bg-[#111827] rounded-[50px] p-4 shadow-2xl border-[6px] border-gray-800 flex flex-col overflow-hidden transition-all duration-300 transform hover:scale-102">
+                    
+                    <!-- Głośnik / Notch u góry -->
+                    <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl z-20 flex items-center justify-center">
+                        <div class="w-12 h-1 bg-gray-800 rounded-full"></div>
+                    </div>
+
+                    <!-- Ekran smartfona -->
+                    <div id="phoneScreen" class="relative w-full h-full bg-white rounded-[38px] overflow-hidden flex flex-col justify-between p-6 pt-10 transition-colors duration-500">
+                        
+                        <!-- Header w telefonie -->
+                        <div class="text-center">
+                            <span class="text-[10px] tracking-widest text-gray-400 font-bold uppercase">Symulator Smartfona</span>
+                            <div class="h-0.5 w-12 bg-gray-200 mx-auto mt-1 rounded-full"></div>
+                        </div>
+
+                        <!-- ŚRODEK: Obszar guzika oraz wskaźników -->
+                        <div class="flex flex-col items-center justify-center flex-grow py-4 relative">
+                            
+                            <!-- Kręgi fal sygnału (pokazujące się przy klikaniu) -->
+                            <div id="pulseContainer" class="absolute w-48 h-48 pointer-events-none hidden">
+                                <div class="absolute inset-0 rounded-full bg-[#B83E15] pulse-wave"></div>
+                                <div class="absolute inset-0 rounded-full bg-[#B83E15] pulse-wave" style="animation-delay: 0.5s;"></div>
+                            </div>
+
+                            <!-- Przycisk KLIKNIJ (Zrzut ekranu 2026-06-7 o 18.35.08.png) -->
+                            <button id="clickBtn" class="relative z-10 w-44 h-44 rounded-full bg-[#B83E15] active:bg-[#9E310E] text-white flex flex-col items-center justify-center font-bold tracking-wider shadow-lg active:scale-95 transition-all focus:outline-none border-4 border-gray-900/10">
+                                <span class="text-2xl font-extrabold tracking-widest">KLIKNIJ</span>
+                                <span class="text-[10px] opacity-75 font-medium mt-1">FIZYCZNY PRZYCISK</span>
+                            </button>
+
+                            <!-- Wizualne kropki postępu (1 z 5, 2 z 5...) -->
+                            <div class="flex gap-2.5 mt-8 z-10">
+                                <div class="dot w-3.5 h-3.5 rounded-full border-2 border-gray-300 transition-all duration-300" data-step="1"></div>
+                                <div class="dot w-3.5 h-3.5 rounded-full border-2 border-gray-300 transition-all duration-300" data-step="2"></div>
+                                <div class="dot w-3.5 h-3.5 rounded-full border-2 border-gray-300 transition-all duration-300" data-step="3"></div>
+                                <div class="dot w-3.5 h-3.5 rounded-full border-2 border-gray-300 transition-all duration-300" data-step="4"></div>
+                                <div class="dot w-3.5 h-3.5 rounded-full border-2 border-gray-300 transition-all duration-300" data-step="5"></div>
+                            </div>
+
+                            <!-- Pasek czasu (ile zostało na kolejne kliknięcie) -->
+                            <div class="w-36 bg-gray-100 h-1.5 rounded-full mt-4 overflow-hidden z-10">
+                                <div id="timerBar" class="bg-amber-500 h-full w-0 transition-all duration-100 ease-linear"></div>
+                            </div>
+                        </div>
+
+                        <!-- STOPKA TELEFONU: Status działania -->
+                        <div class="text-center pb-2 z-10">
+                            <p id="statusMsg" class="text-sm font-semibold text-gray-700 transition-all duration-300">
+                                Czekam na pierwsze kliknięcie...
+                            </p>
+                            <p id="subStatusMsg" class="text-[11px] text-gray-400 mt-0.5">
+                                Kliknij 5 razy szybko
+                            </p>
+                        </div>
+
+                        <!-- EKRAN SUKCESU (Ukryty domyślnie) -->
+                        <div id="successScreen" class="absolute inset-0 bg-[#7f1d1d] text-white flex flex-col justify-between p-6 pt-12 pb-8 z-30 opacity-0 pointer-events-none transition-opacity duration-300">
+                            <div class="text-center space-y-2">
+                                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2 animate-bounce">
+                                    <span class="text-3xl">🚨</span>
+                                </div>
+                                <h3 class="text-2xl font-black uppercase tracking-wider">Alarm SOS</h3>
+                                <p class="text-xs text-red-200">Uruchomiono procedurę ratunkową</p>
+                            </div>
+
+                            <!-- Animacja wysyłania lokalizacji -->
+                            <div class="bg-black/25 p-4 rounded-2xl text-left space-y-2.5 border border-white/10 text-sm">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-green-400 animate-ping"></span>
+                                    <span class="font-bold text-xs text-green-300 uppercase tracking-wider">GPS aktywny</span>
+                                </div>
+                                <p class="text-xs text-gray-200">Wyszukiwanie bliskich osób...</p>
+                                <div class="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                    <div class="bg-green-400 h-full w-[85%] animate-pulse"></div>
+                                </div>
+                                <p class="text-[11px] text-red-200 text-center italic">Wysyłanie SMS z linkiem do mapy za 3s...</p>
+                            </div>
+
+                            <!-- Przycisk resetu -->
+                            <button id="resetBtn" class="w-full bg-white text-red-950 font-bold py-3 px-6 rounded-xl hover:bg-red-100 transition-colors shadow-lg active:scale-95 text-sm uppercase tracking-wider">
+                                Anuluj / Resetuj
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Stopka pomocnicza na prezentację -->
+        <div class="mt-12 pt-6 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center text-xs text-gray-400 gap-4">
+            <p>Studio Jasnej Dostępności — Edukacja Cyfrowa</p>
+            <p class="italic">Wskazówka dla trenera: Możesz uruchomić ten program na pełnym ekranie (klawisz F11)</p>
+        </div>
+
+    </div>
+
+    <script>
+        // Pobieranie elementów HTML
+        const clickBtn = document.getElementById('clickBtn');
+        const statusMsg = document.getElementById('statusMsg');
+        const subStatusMsg = document.getElementById('subStatusMsg');
+        const timerBar = document.getElementById('timerBar');
+        const successScreen = document.getElementById('successScreen');
+        const phoneScreen = document.getElementById('phoneScreen');
+        const resetBtn = document.getElementById('resetBtn');
+        const pulseContainer = document.getElementById('pulseContainer');
+        const dots = document.querySelectorAll('.dot');
+
+        // Parametry symulatora
+        let clickCount = 0;
+        let lastClickTime = 0;
+        let timerInterval = null;
+        let countdownTime = 500; // Zmień tę wartość (np. 1000 to dokładnie 1 sekunda, 800 to 0.8 sekundy)
+        let timerStep = 50; // Odświeżanie paska co 50ms
+        let timeLeft = 0;
+
+        // Inicjalizacja dźwięków (Web Audio API - w pełni autonomiczne bez plików zewnętrznych)
+        let audioCtx = null;
+
+        function playSound(frequency, type, duration) {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.type = type;
+                oscillator.frequency.value = frequency;
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.log("Audio API not supported or blocked");
+            }
+        }
+
+        // Obsługa kliknięcia przycisku
+        clickBtn.addEventListener('click', () => {
+            const now = Date.now();
+            
+            // Jeśli to pierwsze kliknięcie lub mieści się w czasie
+            if (clickCount === 0 || (now - lastClickTime <= countdownTime)) {
+                clickCount++;
+                lastClickTime = now;
+                
+                // Efekty dźwiękowe i wizualne
+                playSound(300 + (clickCount * 100), 'sine', 0.15); // Dźwięk staje się coraz wyższy z każdym kliknięciem
+                triggerPulse();
+                updateVisuals();
+                
+                // Resetujemy i odpalamy licznik czasu na nowo
+                resetTimer();
+                if (clickCount < 5) {
+                    startTimer();
+                } else {
+                    // Sukces! Osiągnięto 5 kliknięć
+                    triggerSOS();
+                }
+            } else {
+                // Zbyt wolno między kliknięciami
+                resetSimulator("Zbyt wolno! Licznik zresetowany.");
+            }
+        });
+
+        // Obsługa przycisku Reset / Anuluj
+        resetBtn.addEventListener('click', () => {
+            playSound(200, 'square', 0.3);
+            resetSimulator("Czekam na pierwsze kliknięcie...");
+        });
+
+        // Funkcja uruchamiająca pasek czasu
+        function startTimer() {
+            timeLeft = countdownTime;
+            timerBar.style.width = '100%';
+            timerBar.className = "bg-amber-500 h-full transition-none";
+
+            timerInterval = setInterval(() => {
+                timeLeft -= timerStep;
+                const percentage = (timeLeft / countdownTime) * 100;
+                
+                // Płynna zmiana szerokości paska
+                timerBar.style.width = `${percentage}%`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    resetSimulator("Zbyt powoli! Spróbuj ponownie.");
+                }
+            }, timerStep);
+        }
+
+        // Resetowanie paska i interwału czasowego
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerBar.style.width = '0%';
+        }
+
+        // Aktualizacja wyglądu kropek i komunikatów
+        function updateVisuals() {
+            // Kolorowanie kropek
+            dots.forEach(dot => {
+                const step = parseInt(dot.getAttribute('data-step'));
+                if (step <= clickCount) {
+                    dot.className = "dot w-3.5 h-3.5 rounded-full bg-[#B83E15] border-2 border-[#B83E15] shadow-sm scale-110";
+                } else {
+                    dot.className = "dot w-3.5 h-3.5 rounded-full border-2 border-gray-300";
+                }
+            });
+
+            // Zmiana tekstu statusu
+            if (clickCount === 1) {
+                statusMsg.innerText = "Kliknięto 1 raz! Dalej!";
+                statusMsg.className = "text-sm font-bold text-amber-600 animate-pulse";
+                subStatusMsg.innerText = "Szybko, kliknij jeszcze 4 razy...";
+            } else if (clickCount > 1 && clickCount < 5) {
+                statusMsg.innerText = `Świetnie! Kliknięto ${clickCount} razy!`;
+                statusMsg.className = "text-sm font-bold text-amber-600 animate-pulse";
+                subStatusMsg.innerText = `Jeszcze tylko ${5 - clickCount} kliknięć...`;
+            }
+        }
+
+        // Impuls wizualny z przycisku (fale)
+        function triggerPulse() {
+            pulseContainer.classList.remove('hidden');
+            setTimeout(() => {
+                pulseContainer.classList.add('hidden');
+            }, 1000);
+        }
+
+        // Uruchomienie ekranu alarmowego (SOS)
+        function triggerSOS() {
+            resetTimer();
+            
+            // Dźwięk syreny alarmowej
+            playSound(800, 'sawtooth', 0.5);
+            setTimeout(() => playSound(600, 'sawtooth', 0.5), 500);
+            setTimeout(() => playSound(800, 'sawtooth', 0.5), 1000);
+
+            // Wyświetlenie czerwonego ekranu
+            successScreen.classList.remove('pointer-events-none');
+            successScreen.classList.add('opacity-100', 'flash-active');
+            
+            statusMsg.innerText = "ALARM WYSŁANY!";
+            statusMsg.className = "text-sm font-bold text-red-600";
+            subStatusMsg.innerText = "Udało się przetestować system!";
+        }
+
+        // Resetowanie całego symulatora do stanu początkowego
+        function resetSimulator(msg) {
+            clickCount = 0;
+            resetTimer();
+            
+            // Przywrócenie domyślnych kropek
+            dots.forEach(dot => {
+                dot.className = "dot w-3.5 h-3.5 rounded-full border-2 border-gray-300";
+            });
+
+            // Ukrycie ekranu sukcesu i zatrzymanie migania
+            successScreen.classList.add('pointer-events-none');
+            successScreen.classList.remove('opacity-100', 'flash-active');
+
+            // Przywrócenie komunikatów
+            statusMsg.innerText = msg;
+            statusMsg.className = "text-sm font-semibold text-gray-700";
+            subStatusMsg.innerText = "Kliknij 5 razy szybko";
+            timerBar.style.width = '0%';
+        }
+    </script>
+</body>
+</html>
